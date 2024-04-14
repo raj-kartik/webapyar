@@ -19,7 +19,7 @@ const Login = () => {
 
 
       console.log('Login successful:', response.data);
-      navigation.navigate('Form')
+      navigation.navigate('Form',  { token: response.data.token })
     } catch (error) {
       console.error('Login failed:', error);
       Alert.alert('Error', 'Invalid email or password');

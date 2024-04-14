@@ -3,9 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Image, Alert } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 
-const Form = ({ route }) => {
-  const { token } = route.params; // Extracting token from route params
-
+const Form = () => {
   const [imageUri, setImageUri] = useState('');
   const { hasPermission, requestPermission } = useCameraPermission();
   const cameraRef = useRef(null);
@@ -43,18 +41,18 @@ const Form = ({ route }) => {
 
       const response = await axios.post('https://test.webyaparsolutions.com/form', formData, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': 'Bearer <your_token>',
           'Content-Type': 'multipart/form-data',
         },
       });
 
       if (response.status === 200) {
         console.log("Successful", response.data);
-        
+        // Handle success, e.g., show a success message
       }
     } catch (error) {
       console.log("Post failed", error);
-      
+      // Handle error, e.g., show an error message
     }
   };
 
