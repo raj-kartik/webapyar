@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Image, Alert } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 
-const Form = () => {
+const Form = (route) => {
   const [imageUri, setImageUri] = useState('');
   const { hasPermission, requestPermission } = useCameraPermission();
   const cameraRef = useRef(null);
@@ -17,44 +17,52 @@ const Form = () => {
     }
   }, [hasPermission]);
 
+
+  const {token} = route.params
+  console.log("token ",token);
+
   if (device == null) return <NoCameraDeviceError />; // if no back camera
 
-  const takePicture = async () => {
-    if(cameraRef !== null){
-      const photo = await cameraRef.current.takePhoto();
-      setImageUri(photo.path);
-      setTakePictureClicked(true);
+  const takePicture = () => {
+    if (cameraRef !== null) {
+      return cameraRef.current.takePhoto();
     }
+    return Promise.reject(new Error("Camera reference not found"));
   };
   
   const submitForm = async () => {
-    console.log("imageuri ",imageUri);
+    console.log("imageuri ", imageUri);
     try {
       const formData = new FormData();
       formData.append('latitude', '40.712776'); // Example latitude
       formData.append('longitude', '-74.005974'); // Example longitude
+      
+      // Wait for image capture to finish
+      const photo = await takePicture();
+  
       formData.append('file', {
-        uri: imageUri,
+        uri: photo.path,
         type: 'image/jpeg', // Adjust file type based on your image
         name: 'photo.jpg',
       });
-
+  
       const response = await axios.post('https://test.webyaparsolutions.com/form', formData, {
         headers: {
-          'Authorization': 'Bearer <your_token>',
+          'Authorization': token,
           'Content-Type': 'multipart/form-data',
         },
       });
-
+  
       if (response.status === 200) {
         console.log("Successful", response.data);
-        // Handle success, e.g., show a success message
+        // Handle success
       }
     } catch (error) {
       console.log("Post failed", error);
-      // Handle error, e.g., show an error message
+      // Handle error
     }
   };
+  
 
   return (
     <View style={styles.container}>

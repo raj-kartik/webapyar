@@ -4,7 +4,7 @@ import { View, TouchableOpacity, Text, StyleSheet, Image, Alert } from 'react-na
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 
 const Form = ({ route }) => {
-  const { token } = route.params; // Extracting token from route params
+  const { token } = route.params;
 
   const [imageUri, setImageUri] = useState('');
   const { hasPermission, requestPermission } = useCameraPermission();
@@ -13,48 +13,57 @@ const Form = ({ route }) => {
   const [takePictureClicked, setTakePictureClicked] = useState(false);
 
   useEffect(() => {
-    // Request camera permission if not granted
     if (!hasPermission) {
       requestPermission();
     }
   }, [hasPermission]);
 
-  if (device == null) return <NoCameraDeviceError />; // if no back camera
+  console.log("token: ",token);
+
+  if (device == null) return <NoCameraDeviceError />;
 
   const takePicture = async () => {
-    if(cameraRef !== null){
-      const photo = await cameraRef.current.takePhoto();
+    try {
+      const photo = await cameraRef.current.takePhoto({ quality: 'high', base64: false });
       setImageUri(photo.path);
       setTakePictureClicked(true);
+      console.log('Image captured:', photo.path);
+    } catch (error) {
+      console.log('Error taking picture:', error);
+      Alert.alert('Error', 'Failed to take picture. Please try again.');
     }
   };
-  
+
   const submitForm = async () => {
-    console.log("imageuri ",imageUri);
     try {
+      if (!imageUri) {
+        throw new Error('Image URI is empty');
+      }
+
       const formData = new FormData();
-      formData.append('latitude', '40.712776'); // Example latitude
-      formData.append('longitude', '-74.005974'); // Example longitude
+      formData.append('latitude', '40.712776');
+      formData.append('longitude', '-74.005974'); 
       formData.append('file', {
         uri: imageUri,
-        type: 'image/jpeg', // Adjust file type based on your image
+        type: 'image/jpeg',
         name: 'photo.jpg',
       });
 
       const response = await axios.post('https://test.webyaparsolutions.com/form', formData, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': token,
           'Content-Type': 'multipart/form-data',
         },
       });
 
+      console.log('Response:', response.data);
+
       if (response.status === 200) {
-        console.log("Successful", response.data);
-        
+        console.log('Successful');
+        // Optionally, show a success message or navigate to another screen
       }
     } catch (error) {
-      console.log("Post failed", error);
-      
+      console.log('Post failed', error);
     }
   };
 
@@ -62,11 +71,9 @@ const Form = ({ route }) => {
     <View style={styles.container}>
       { takePictureClicked ? (
         <>
-          {imageUri !=='' && (
+          {imageUri && (
             <View style={styles.imageContainer}>
-              <View style={styles.image} >
-                <Image source={{uri: 'file://'+imageUri }} style={{flex:1}} />
-              </View>
+              <Image source={{ uri: 'file://' + imageUri }} style={styles.image} />
             </View>
           )}
           <View style={styles.buttonContainer}>
@@ -76,13 +83,13 @@ const Form = ({ route }) => {
           </View>
         </>
       ) : (
-        <View style={{flex:1}} >
+        <View style={{ flex: 1 }}>
           <Camera
             ref={cameraRef}
             style={styles.camera}
             device={device}
             isActive={true}
-            photo={true} // Enable photo capture
+            photo={true}
           />
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.button} onPress={takePicture}>
@@ -119,24 +126,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
   },
   image: {
     width: '80%',
     height: '80%',
     resizeMode: 'contain',
-    borderRadius:10
-  },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
-    fontSize: 16,
-    marginTop: 20,
+    borderRadius: 10,
   },
 });
 
